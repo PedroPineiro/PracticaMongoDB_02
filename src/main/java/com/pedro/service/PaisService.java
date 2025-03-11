@@ -1,79 +1,84 @@
 package com.pedro.service;
 
+import com.pedro.model.Pais;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.pedro.model.Pais;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.io.File;
 import java.io.IOException;
 
 /**
- * Clase con los metodos CRUD del pais
+ * Clase con los métodos CRUD para la colección Pais en MongoDB.
  */
 public class PaisService {
     /**
-     * Metodo para insertar un pais
-     * @param pais
-     * @param collection
+     * Inserta un nuevo país en la colección.
+     * @param pais Objeto Pais a insertar.
+     * @param collection Colección MongoDB.
      */
-    public static void insertPais(Pais pais, MongoCollection<Document> collection) {
+    public static void insertarPais(Pais pais, MongoCollection<Document> collection) {
         Document insert = new Document("nome", pais.getNome())
                 .append("organizacion", pais.getOrganizacion())
                 .append("partidos", pais.getPartidos())
-                .append("id_presidente", pais.getId_presidente());
+                .append("id_presidente", pais.getId_presidente()); // ID del presidente
         collection.insertOne(insert);
     }
 
     /**
-     * Metodo para eliminar un pais
-     * @param nome
-     * @param collection
+     * Elimina un país de la colección.
+     * @param nome Nombre del país a eliminar.
+     * @param collection Colección MongoDB.
      */
-    public static void deleteCountry(String nome, MongoCollection<Document> collection) {
+    public static void eliminarPais(String nome, MongoCollection<Document> collection) {
         Document delete = new Document("nome", nome);
         collection.deleteOne(delete);
     }
 
     /**
-     * Metodo que guarda un Pais en un archivo JSON en el directorio JSON
-     * @param pais
-     * @param directoryPath
+     * Guarda un objeto Pais en un archivo JSON.
+     * @param pais Objeto Pais a guardar.
+     * @param directorio Ruta del directorio donde se guardará el JSON.
      */
-    public static void savePaisToJson(Pais pais, String directoryPath) {
+    public static void guardarPaisJson(Pais pais, String directorio) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            File directory = new File(directoryPath);
-            if (!directory.exists()) {
-                directory.mkdirs();
+            File dir = new File(directorio);
+            if (!dir.exists()) {
+                dir.mkdirs();
             }
-            File file = new File(directory, pais.getNome() + ".json");
-            objectMapper.writeValue(file, pais);
-            System.out.println("Pais saved to JSON file: " + file.getAbsolutePath());
+            File archivo = new File(dir, pais.getNome() + ".json");
+            objectMapper.writeValue(archivo, pais);
+            System.out.println("🌍 País guardado en JSON: " + archivo.getAbsolutePath());
         } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Error al guardar JSON: " + e.getMessage());
         }
     }
 
     /**
-     * Metodo que muestra todos los paises por consola
+     * Muestra todos los países almacenados en la base de datos.
      */
-    public static void showAllPaises(MongoCollection<Document> collection) {
+    public static void mostrarPaises(MongoCollection<Document> collection) {
         FindIterable<Document> paises = collection.find();
         for (Document pais : paises) {
             System.out.println(pais.toJson());
         }
     }
 
-
-    public static void updatePais(Pais pais, String newNome, String newOrganizacion, String newPartidos, MongoCollection<Document> collection) {
-        Document query = new Document("nome", newNome);
-        Document update = new Document("$set", new Document("organizacion", newOrganizacion)
-                .append("partidos", newPartidos)
-                .append("id_presidente", pais.getId_presidente()));
+    /**
+     * Modifica un país en la base de datos.
+     * @param id ID del país a modificar.
+     * @param nuevaOrganizacion Nueva organización política del país.
+     * @param nuevosPartidos Nuevo array de partidos políticos.
+     * @param collection Colección MongoDB.
+     */
+    public static void actualizarPais(ObjectId id, String nuevaOrganizacion, String[] nuevosPartidos, MongoCollection<Document> collection) {
+        Document query = new Document("_id", id);
+        Document update = new Document("$set", new Document("organizacion", nuevaOrganizacion)
+                .append("partidos", nuevosPartidos));
         collection.updateOne(query, update);
-        System.out.println("Pais updated: " + pais.getNome());
+        System.out.println("✅ País actualizado correctamente.");
     }
-
 }
